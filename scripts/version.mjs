@@ -48,7 +48,7 @@ function currentVersions() {
     ),
     "src-tauri/Cargo.lock": matchVersion(
       cargoLock,
-      /\[\[package\]\]\nname = "portlens"\nversion = "([^"]+)"/,
+      /\[\[package\]\]\r?\nname = "portlens"\r?\nversion = "([^"]+)"/,
       "src-tauri/Cargo.lock",
     ),
   };
@@ -95,7 +95,7 @@ function setVersion(version) {
   write("src-tauri/Cargo.toml", cargoTomlSource.replace(cargoTomlPattern, `$1${version}$2`));
 
   const cargoLockSource = read("src-tauri/Cargo.lock");
-  const cargoLockPattern = /(\[\[package\]\]\nname = "portlens"\nversion = ")[^"]+("\r?\n)/;
+  const cargoLockPattern = /(\[\[package\]\]\r?\nname = "portlens"\r?\nversion = ")[^"]+("\r?\n)/;
   if (!cargoLockPattern.test(cargoLockSource)) {
     throw new Error("Could not update src-tauri/Cargo.lock");
   }
