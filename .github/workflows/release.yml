@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    name: Build and publish Windows release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify release version
+        shell: pwsh
+        run: npm run version:check -- $env:GITHUB_REF_NAME
+
+      - name: Check Rust formatting
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+
+      - name: Run Rust tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Build portable executable
+        run: npm run tauri build -- --no-bundle
+
+      - name: Prepare release files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item src-tauri/target/release/portlens.exe release/PortLens.exe
+          $hash = (Get-FileHash release/PortLens.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  PortLens.exe" | Set-Content release/PortLens.exe.sha256 -Encoding ascii
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PortLens-${{ github.ref_name }}-windows-x64
+          path: release/*
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create $env:GITHUB_REF_NAME `
+            release/PortLens.exe `
+            release/PortLens.exe.sha256 `
+            --verify-tag `
+            --generate-notes `
+            --title "PortLens $env:GITHUB_REF_NAME"

@@ -27,7 +27,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": [
+      "nsis"
+    ],
     "shortDescription": "Inspect local ports and stop development processes",
     "longDescription": "A compact desktop utility for identifying local listening ports, their owning applications, and stopping unwanted development process trees.",
     "windows": {

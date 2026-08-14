@@ -9,6 +9,8 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/xirfly/portlens/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/xirfly/portlens/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/xirfly/portlens/releases/latest"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/xirfly/portlens?display_name=tag"></a>
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-2563eb">
   <img alt="Platform: Windows 11" src="https://img.shields.io/badge/platform-Windows%2011-0078d4">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-24c8db">
@@ -70,7 +72,7 @@ PortLens 在本机读取端口和进程信息，不上传扫描结果，也不�
 
 ## 下载与运行
 
-正式版本会发布在 GitHub Releases。下载 `PortLens.exe` 后可直接运行，无需安装。
+正式版本发布在 [GitHub Releases](https://github.com/xirfly/portlens/releases)。下载最新版本的 `PortLens.exe` 后可直接运行，无需安装。每个版本同时提供 `PortLens.exe.sha256`，可用于验证文件完整性。
 
 Windows 11 通常已经包含 WebView2 Runtime。未签名的早期版本可能触发 Microsoft Defender SmartScreen 提示，请只从本项目的 GitHub Releases 下载，并在运行前核对发布说明和文件哈希。
 
@@ -137,6 +139,29 @@ src-tauri\target\release\portlens.exe
 
 默认构建使用 `--no-bundle`，只生成便携版，不下载 NSIS 工具包。发布用二进制不应提交到源码仓库，而应作为 GitHub Release 附件发布。
 
+## 发布新版本
+
+发布脚本会同步 npm、Tauri 和 Cargo 的版本号，在本机完成 release 构建，然后创建版本提交和 Git 标签。标签推送后，GitHub Actions 会在干净的 Windows Runner 上重新测试和构建，并自动把以下文件发布到 Releases：
+
+```text
+PortLens.exe
+PortLens.exe.sha256
+```
+
+确保当前位于干净的 `main` 分支，并已配置 GitHub 网络代理和推送权限，然后执行：
+
+```powershell
+.\release.ps1 0.2.0
+```
+
+版本号必须遵循语义化版本规范。常用递增方式：
+
+- 修复问题：`0.1.0 -> 0.1.1`
+- 向后兼容的新功能：`0.1.0 -> 0.2.0`
+- 不兼容变更：`0.x -> 1.0.0`
+
+也可以手动执行 `npm run version:set -- 0.2.0` 更新版本，提交后创建并推送 `v0.2.0` 标签。GitHub Release 工作流只接受与项目版本完全一致的标签。
+
 ## 技术实现
 
 ```text
@@ -158,7 +183,7 @@ Rust 后端通过系统 API 获取端口与 PID 的映射，不解析受系统�
 
 ## 路线图
 
-- 完善签名、自动发布和校验文件生成流程
+- 完善代码签名和可信发布链
 - 增加端口占用变化提醒与可选历史记录
 - 改进开发运行时识别规则和用户自定义规则
 - 在 macOS 和 Linux 上实现并验证对应后端
